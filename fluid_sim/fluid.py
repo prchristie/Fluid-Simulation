@@ -1,7 +1,6 @@
 import numpy as np
-import threading
 from numba import cuda
-from fluid_utils import IX_cpu, diffuse, advect, project
+from fluid_sim.fluid_utils import IX_cpu, diffuse, advect, project
 
 
 class Fluid:
@@ -41,7 +40,7 @@ class Fluid:
         self._prev_vel_x = cuda.to_device(np.zeros(self.grid_space))
         self._prev_vel_y = cuda.to_device(np.zeros(self.grid_space))
 
-    def add_density(self, x: int, y: int, amount: float)->None:
+    def add_density(self, x: int, y: int, amount: float) -> None:
         """Adds density to the (x, y) position on the fluid board.
 
         Args:
@@ -52,7 +51,8 @@ class Fluid:
         index = IX_cpu(x, y, self.N)
         self.density[index] += amount
 
-    def add_velocity(self, x: int, y: int, amount_x: float, amount_y: float)->None:
+    def add_velocity(self, x: int, y: int, amount_x: float,
+                     amount_y: float) -> None:
         """Adds velocity to the (x, y) position on the fluid board. Velocity moves density around.
 
         Args:
@@ -65,12 +65,12 @@ class Fluid:
         self.vel_x[index] += amount_x
         self.vel_y[index] += amount_y
 
-    def _density_step(self, density, vel_x, vel_y)->None:
+    def _density_step(self, density, vel_x, vel_y) -> None:
         diffuse(self.N, 0, self._prev_density, density, self.diffusion_rate,
                 self.dt)
         advect(self.N, 0, density, self._prev_density, vel_x, vel_y, self.dt)
 
-    def density_step(self)->None:
+    def density_step(self) -> None:
         """An 'optimised' density step that only copies the things to device that are truly needed
         for a density step. This should NOT be used if doing density and velocity steps together
         (which you should be if you are trying to simulate correctly). User step() instead.
@@ -82,7 +82,7 @@ class Fluid:
         cuda.synchronize()
         self.density = density_device.copy_to_host()
 
-    def vel_step(self)->None:
+    def vel_step(self) -> None:
         """An 'optimised' velocity step that only copies the things to device that are truly needed
         for a velocity step. This should NOT be used if doing density and velocity steps together
         (which you should be if you are trying to simulate correctly). Use step() instead.
@@ -94,7 +94,7 @@ class Fluid:
         self.vel_x = vel_x_device.copy_to_host()
         self.vel_y = vel_y_device.copy_to_host()
 
-    def _vel_step(self, vel_x, vel_y)->None:
+    def _vel_step(self, vel_x, vel_y) -> None:
         diffuse(self.N, 1, self._prev_vel_x, vel_x, self.viscosity, self.dt)
         diffuse(self.N, 2, self._prev_vel_y, vel_y, self.viscosity, self.dt)
 
@@ -107,7 +107,7 @@ class Fluid:
 
         project(self.N, vel_x, vel_y, self._prev_vel_x, self._prev_vel_y)
 
-    def step(self)->None:
+    def step(self) -> None:
         """A total step of the simulation. First simulates the velocity of the fluid environment,
         then the effect of that velocity on the density.
 
@@ -121,7 +121,6 @@ class Fluid:
         vel_x_device = cuda.to_device(self.vel_x)
         vel_y_device = cuda.to_device(self.vel_y)
         density_device = cuda.to_device(self.density)
-
 
         self._vel_step(vel_x_device, vel_y_device)
         self._density_step(density_device, vel_x_device, vel_y_device)

@@ -13,6 +13,7 @@ import numpy as np
 from numba import cuda
 import math
 
+
 def diffuse(side_length: int, side: int, current_list: np.ndarray,
             prev_list: np.ndarray, diffusion_rate: float, dt: float):
     """**Diffuses** the values of the current_list outwards by moving the previous list towards the
@@ -35,6 +36,7 @@ def diffuse(side_length: int, side: int, current_list: np.ndarray,
         lin_solve[threads_per_block,
                   blocks_per_grid](side_length, side, current_list, prev_list,
                                    a, 1 + (4 * a))
+
 
 @cuda.jit
 def lin_solve(side_length: int, side: int, current_list: np.ndarray,
@@ -70,6 +72,7 @@ def lin_solve(side_length: int, side: int, current_list: np.ndarray,
                                current_list[IX(x, y + 1, side_length)]))) / c
     set_bnd(side_length, side, current_list)
 
+
 @cuda.jit(device=True)
 def device_lin_solve(side_length: int, side: int, current_list: np.ndarray,
                      prev_list: np.ndarray, a: float, c: float):
@@ -95,6 +98,7 @@ def device_lin_solve(side_length: int, side: int, current_list: np.ndarray,
                                current_list[IX(x, y + 1, side_length)]))) / c
     set_bnd(side_length, side, current_list)
 
+
 def advect(side_length: int, side: int, current_list: np.ndarray,
            prev_list: np.ndarray, x_velocity: np.ndarray,
            y_velocity: np.ndarray, timestep: float):
@@ -111,8 +115,9 @@ def advect(side_length: int, side: int, current_list: np.ndarray,
         y_velocity: Current y velocity
         timestep: How long each timestep is. Lower results in a better simulation
     """
-    _advect[32 * 8, 100](side_length, side, current_list, prev_list, x_velocity,
-                        y_velocity, timestep)
+    _advect[32 * 8, 100](side_length, side, current_list, prev_list,
+                         x_velocity, y_velocity, timestep)
+
 
 @cuda.jit
 def _advect(side_length: int, side: int, current_list: np.ndarray,
