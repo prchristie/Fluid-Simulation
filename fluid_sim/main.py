@@ -40,12 +40,12 @@ def main():
                 for i in range(-1, 2):
                     for j in range(-1, 2):
                         fluid.add_density(x + i, y + j,
-                                          random.randint(100, 500))
+                                          random.randint(100, 200))
                         fluid.add_velocity(x, y, change_x * 2, change_y * 2)
 
                 prev_x, prev_y = x, y
 
-        fluid.density[fluid.density > 0] -= 0.3
+        fluid.density[fluid.density > 0] -= 0.5
 
         fluid.step()
         density = fluid.density.reshape(WIDTH, HEIGHT).copy()

@@ -28,7 +28,7 @@ setup(
     description="A python implementation for a gpu accelerated fluid simulation as described in the paper 'Real-Time Fluid Dynamics for Games'",
     entry_points={
         'console_scripts': [
-            'fluid-sim=fluid_sim.cli:start',
+            'fluid-sim=fluid_sim.main:main',
         ],
     },
     install_requires=requirements,
